@@ -1,0 +1,7 @@
+---
+- name: Install Spotify via paru
+  ansible.builtin.command:
+    cmd: paru -S --noconfirm --needed spotify-launcher
+  register: spotify_install
+  changed_when: "'installing' in spotify_install.stdout"
+  failed_when: spotify_install.rc != 0

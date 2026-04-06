@@ -1,0 +1,6 @@
+---
+- name: Install Flameshot
+  become: true
+  ansible.builtin.dnf:
+    name: flameshot
+    state: present

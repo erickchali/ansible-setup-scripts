@@ -1,0 +1,7 @@
+---
+- name: Install asdf via paru
+  ansible.builtin.command:
+    cmd: paru -S --noconfirm --needed asdf-vm
+  register: asdf_install
+  changed_when: "'installing' in asdf_install.stdout"
+  failed_when: asdf_install.rc != 0

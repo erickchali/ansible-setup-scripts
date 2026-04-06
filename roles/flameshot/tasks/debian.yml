@@ -1,0 +1,7 @@
+---
+- name: Install Flameshot
+  become: true
+  ansible.builtin.apt:
+    name: flameshot
+    state: present
+    update_cache: true

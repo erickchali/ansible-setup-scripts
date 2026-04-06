@@ -1,0 +1,7 @@
+---
+- name: Install JetBrains Toolbox via paru
+  ansible.builtin.command:
+    cmd: paru -S --noconfirm --needed jetbrains-toolbox
+  register: jb_install
+  changed_when: "'installing' in jb_install.stdout"
+  failed_when: jb_install.rc != 0

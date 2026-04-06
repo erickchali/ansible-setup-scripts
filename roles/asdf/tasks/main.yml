@@ -1,0 +1,9 @@
+---
+- name: Include distro-specific asdf tasks
+  ansible.builtin.include_tasks: "{{ distro_family }}.yml"
+
+- name: Configure shell for asdf (v0.16+)
+  ansible.builtin.include_tasks: shell_config.yml
+
+- name: Install asdf plugins
+  ansible.builtin.include_tasks: plugins.yml

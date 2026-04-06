@@ -1,0 +1,14 @@
+---
+- name: Import 1Password GPG signing key
+  ansible.builtin.shell:
+    cmd: curl -sS https://downloads.1password.com/linux/keys/1password.asc | gpg --import
+  register: gpg_import
+  changed_when: "'imported' in gpg_import.stderr"
+  failed_when: false
+
+- name: Install 1Password via paru
+  ansible.builtin.command:
+    cmd: paru -S --noconfirm --needed 1password
+  register: op_install
+  changed_when: "'installing' in op_install.stdout"
+  failed_when: op_install.rc != 0

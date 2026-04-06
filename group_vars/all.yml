@@ -1,0 +1,36 @@
+---
+# ============================================================================
+# Default tools to install on all workstations
+# Override per-host in host_vars/<hostname>.yml
+# ============================================================================
+
+tools:
+  - paru
+  - docker
+  - jetbrains-toolbox
+  - brave
+  - 1password
+  - vscode
+  - asdf
+  - gaming
+  - discord
+  - spotify
+  - flameshot
+  - ssh-keys
+  - vmware
+
+# ─── SSH key profiles ────────────────────────────────────────────────────────
+
+ssh_key_profiles:
+  - name: personal
+    host: github.com
+  - name: SC
+    host: github.com
+  - name: Spot2
+    host: github.com
+
+# ─── asdf plugins to install ─────────────────────────────────────────────────
+
+asdf_plugins:
+  - name: nodejs
+    version: latest

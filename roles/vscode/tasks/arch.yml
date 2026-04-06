@@ -1,0 +1,7 @@
+---
+- name: Install VS Code via paru
+  ansible.builtin.command:
+    cmd: paru -S --noconfirm --needed visual-studio-code-bin
+  register: vscode_install
+  changed_when: "'installing' in vscode_install.stdout"
+  failed_when: vscode_install.rc != 0

@@ -1,0 +1,43 @@
+---
+- name: Check if paru is installed
+  ansible.builtin.command: which paru
+  register: paru_check
+  changed_when: false
+  failed_when: false
+
+- name: Install paru from CachyOS repo (if available)
+  become: true
+  community.general.pacman:
+    name: paru
+    state: present
+  when: paru_check.rc != 0
+  register: paru_repo
+  failed_when: false
+
+- name: Build paru from AUR if not in repos
+  when: paru_check.rc != 0 and paru_repo is failed
+  block:
+    - name: Install build dependencies
+      become: true
+      community.general.pacman:
+        name:
+          - base-devel
+          - git
+        state: present
+
+    - name: Clone paru-bin from AUR
+      ansible.builtin.git:
+        repo: https://aur.archlinux.org/paru-bin.git
+        dest: /tmp/paru-bin
+        version: master
+
+    - name: Build and install paru
+      ansible.builtin.command:
+        cmd: makepkg -si --noconfirm
+        chdir: /tmp/paru-bin
+      changed_when: true
+
+    - name: Cleanup paru build directory
+      ansible.builtin.file:
+        path: /tmp/paru-bin
+        state: absent

@@ -1,0 +1,20 @@
+---
+# Discord provides a .deb on their site, but Flatpak is cleaner for automation
+- name: Ensure Flatpak is installed
+  become: true
+  ansible.builtin.apt:
+    name: flatpak
+    state: present
+
+- name: Add Flathub repository
+  become: true
+  community.general.flatpak_remote:
+    name: flathub
+    flatpakrepo_url: https://dl.flathub.org/repo/flathub.flatpakrepo
+    state: present
+
+- name: Install Discord via Flatpak
+  community.general.flatpak:
+    name: com.discordapp.Discord
+    state: present
+    remote: flathub

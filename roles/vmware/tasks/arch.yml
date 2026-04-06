@@ -1,0 +1,62 @@
+---
+- name: Detect kernel variant for headers
+  ansible.builtin.shell:
+    cmd: uname -r
+  register: kernel_version
+  changed_when: false
+
+- name: Set kernel headers package name
+  ansible.builtin.set_fact:
+    kernel_headers_pkg: >-
+      {%- if 'lts' in kernel_version.stdout -%}linux-lts-headers
+      {%- elif 'cachyos' in kernel_version.stdout -%}linux-cachyos-headers
+      {%- else -%}linux-headers{%- endif -%}
+
+- name: Install kernel headers
+  become: true
+  community.general.pacman:
+    name: "{{ kernel_headers_pkg }}"
+    state: present
+
+- name: Install vmware-keymaps (required dependency)
+  ansible.builtin.command:
+    cmd: paru -S --noconfirm --needed vmware-keymaps
+  register: keymaps_install
+  changed_when: "'installing' in keymaps_install.stdout"
+  failed_when: keymaps_install.rc != 0
+
+- name: Install VMware Workstation from AUR
+  ansible.builtin.command:
+    cmd: paru -S --noconfirm --needed vmware-workstation
+  register: vmware_install
+  changed_when: "'installing' in vmware_install.stdout"
+
+- name: Verify kernel modules were built
+  ansible.builtin.command:
+    cmd: modinfo vmmon
+  register: vmmon_check
+  changed_when: false
+  failed_when: vmmon_check.rc != 0
+
+- name: Enable VMware network service
+  become: true
+  ansible.builtin.systemd:
+    name: vmware-networks
+    enabled: true
+    state: started
+
+- name: Enable VMware USB arbitrator service
+  become: true
+  ansible.builtin.systemd:
+    name: vmware-usbarbitrator
+    enabled: true
+    state: started
+
+- name: Load VMware kernel modules
+  become: true
+  community.general.modprobe:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - vmw_vmci
+    - vmmon

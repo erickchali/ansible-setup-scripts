@@ -1,0 +1,8 @@
+---
+# Example: override tools for a specific Fedora host
+# tools:
+#   - docker
+#   - brave
+#   - vscode
+#   - 1password
+#   - ssh-keys

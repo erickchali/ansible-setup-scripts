@@ -1,0 +1,50 @@
+---
+- name: Ensure ~/.ssh directory exists
+  ansible.builtin.file:
+    path: "{{ ansible_env.HOME }}/.ssh"
+    state: directory
+    mode: "0700"
+
+- name: Generate ed25519 SSH keys
+  community.crypto.openssh_keypair:
+    path: "{{ ansible_env.HOME }}/.ssh/id_ed25519_{{ item.name }}"
+    type: ed25519
+    comment: "{{ item.name }}@{{ ansible_hostname }}"
+    state: present
+  loop: "{{ ssh_key_profiles }}"
+
+- name: Ensure ~/.ssh/config exists
+  ansible.builtin.file:
+    path: "{{ ansible_env.HOME }}/.ssh/config"
+    state: touch
+    mode: "0600"
+    modification_time: preserve
+    access_time: preserve
+
+- name: Configure SSH Host entries
+  ansible.builtin.blockinfile:
+    path: "{{ ansible_env.HOME }}/.ssh/config"
+    marker: "# {mark} ANSIBLE MANAGED — {{ item.name }}"
+    block: |
+      Host {{ item.host }}-{{ item.name }}
+          HostName {{ item.host }}
+          User git
+          IdentityFile {{ ansible_env.HOME }}/.ssh/id_ed25519_{{ item.name }}
+          IdentitiesOnly yes
+    state: present
+  loop: "{{ ssh_key_profiles }}"
+
+- name: Display public keys
+  ansible.builtin.command:
+    cmd: "cat {{ ansible_env.HOME }}/.ssh/id_ed25519_{{ item.name }}.pub"
+  loop: "{{ ssh_key_profiles }}"
+  register: pub_keys
+  changed_when: false
+
+- name: Show public keys to add to GitHub
+  ansible.builtin.debug:
+    msg: |
+      [{{ item.item.name }}] {{ item.stdout }}
+  loop: "{{ pub_keys.results }}"
+  loop_control:
+    label: "{{ item.item.name }}"

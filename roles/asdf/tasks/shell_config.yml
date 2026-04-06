@@ -1,0 +1,30 @@
+---
+- name: Detect user shell
+  ansible.builtin.set_fact:
+    user_shell: "{{ ansible_env.SHELL | basename }}"
+
+- name: Set shell rc file
+  ansible.builtin.set_fact:
+    shell_rc: >-
+      {%- if user_shell == 'zsh' -%}{{ ansible_env.HOME }}/.zshrc
+      {%- elif user_shell == 'bash' -%}{{ ansible_env.HOME }}/.bashrc
+      {%- elif user_shell == 'fish' -%}{{ ansible_env.HOME }}/.config/fish/config.fish
+      {%- else -%}{{ ansible_env.HOME }}/.bashrc{%- endif -%}
+
+- name: Add asdf shims to PATH (bash/zsh)
+  ansible.builtin.lineinfile:
+    path: "{{ shell_rc }}"
+    line: 'export PATH="${ASDF_DATA_DIR:-$HOME/.asdf}/shims:$PATH"'
+    regexp: 'asdf.*shims'
+    create: true
+    mode: "0644"
+  when: user_shell != 'fish'
+
+- name: Add asdf shims to PATH (fish)
+  ansible.builtin.lineinfile:
+    path: "{{ shell_rc }}"
+    line: 'set -gx --prepend PATH (test -n "$ASDF_DATA_DIR" && echo "$ASDF_DATA_DIR/shims" || echo "$HOME/.asdf/shims")'
+    regexp: 'asdf.*shims'
+    create: true
+    mode: "0644"
+  when: user_shell == 'fish'

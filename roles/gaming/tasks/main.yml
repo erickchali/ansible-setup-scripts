@@ -1,0 +1,25 @@
+---
+# Gaming meta packages are CachyOS-specific
+
+- name: Ensure multilib is enabled
+  become: true
+  ansible.builtin.replace:
+    path: /etc/pacman.conf
+    regexp: '^#\[multilib\]\n#Include'
+    replace: "[multilib]\nInclude"
+  register: multilib_toggle
+
+- name: Refresh package database after enabling multilib
+  become: true
+  community.general.pacman:
+    update_cache: true
+    upgrade: true
+  when: multilib_toggle.changed
+
+- name: Install CachyOS gaming meta packages
+  become: true
+  community.general.pacman:
+    name:
+      - cachyos-gaming-meta
+      - cachyos-gaming-applications
+    state: present

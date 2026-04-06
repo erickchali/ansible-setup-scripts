@@ -1,0 +1,58 @@
+---
+# VMware Workstation on Fedora requires the .bundle installer from Broadcom.
+# The bundle cannot be downloaded without a Broadcom account token,
+# so we check if the user has already downloaded it.
+
+- name: Install build dependencies for VMware kernel modules
+  become: true
+  ansible.builtin.dnf:
+    name:
+      - kernel-headers
+      - kernel-devel
+      - gcc
+      - make
+      - dkms
+    state: present
+
+- name: Check if VMware is already installed
+  ansible.builtin.command: which vmware
+  register: vmware_check
+  changed_when: false
+  failed_when: false
+
+- name: Check for VMware bundle in home directory
+  ansible.builtin.find:
+    paths: "{{ ansible_env.HOME }}/Downloads"
+    patterns: "VMware-Workstation-Full-*.bundle"
+  register: vmware_bundle
+  when: vmware_check.rc != 0
+
+- name: Install VMware from bundle
+  become: true
+  ansible.builtin.command:
+    cmd: "sh {{ vmware_bundle.files[0].path }}"
+  when:
+    - vmware_check.rc != 0
+    - vmware_bundle.files | length > 0
+  changed_when: true
+
+- name: Warn if no bundle found
+  ansible.builtin.debug:
+    msg: |
+      VMware Workstation bundle not found in ~/Downloads.
+      Please download it from https://support.broadcom.com (requires free Broadcom account),
+      place the .bundle file in ~/Downloads, and re-run this playbook.
+  when:
+    - vmware_check.rc != 0
+    - vmware_bundle.files | length == 0
+
+- name: Enable VMware services
+  become: true
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    enabled: true
+    state: started
+  loop:
+    - vmware-networks
+    - vmware-usbarbitrator
+  when: vmware_check.rc == 0 or (vmware_bundle.files | default([]) | length > 0)

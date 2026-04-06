@@ -1,0 +1,84 @@
+---
+# ============================================================================
+# Workstation Setup Playbook
+# ============================================================================
+# Usage:
+#   ansible-playbook -i inventory.ini playbook.yml
+#   ansible-playbook -i inventory.ini playbook.yml --tags "docker,brave"
+#   ansible-playbook playbook.yml --connection=local  (for localhost)
+# ============================================================================
+
+- name: Dev Workstation Setup
+  hosts: workstations
+  become: false
+
+  pre_tasks:
+    - name: Detect distro family
+      ansible.builtin.set_fact:
+        distro_family: >-
+          {%- if ansible_distribution == 'Archlinux' or ansible_distribution == 'CachyOS' -%}arch
+          {%- elif ansible_distribution == 'Fedora' -%}fedora
+          {%- elif ansible_distribution in ['Ubuntu', 'Pop!_OS', 'Debian', 'Linux Mint'] -%}debian
+          {%- else -%}unknown{%- endif -%}
+
+    - name: Fail on unsupported distro
+      ansible.builtin.fail:
+        msg: "Unsupported distribution: {{ ansible_distribution }}"
+      when: distro_family == 'unknown'
+
+    - name: Show detected distro
+      ansible.builtin.debug:
+        msg: "Detected {{ ansible_distribution }} ({{ distro_family }} family)"
+
+  roles:
+    - role: paru
+      when: "'paru' in tools and distro_family == 'arch'"
+      tags: [paru]
+
+    - role: docker
+      when: "'docker' in tools"
+      tags: [docker]
+
+    - role: brave
+      when: "'brave' in tools"
+      tags: [brave]
+
+    - role: onepassword
+      when: "'1password' in tools"
+      tags: [1password]
+
+    - role: vscode
+      when: "'vscode' in tools"
+      tags: [vscode]
+
+    - role: jetbrains_toolbox
+      when: "'jetbrains-toolbox' in tools"
+      tags: [jetbrains-toolbox]
+
+    - role: asdf
+      when: "'asdf' in tools"
+      tags: [asdf]
+
+    - role: gaming
+      when: "'gaming' in tools and distro_family == 'arch'"
+      tags: [gaming]
+
+    - role: discord
+      when: "'discord' in tools"
+      tags: [discord]
+
+    - role: spotify
+      when: "'spotify' in tools"
+      tags: [spotify]
+
+    - role: flameshot
+      when: "'flameshot' in tools"
+      tags: [flameshot]
+
+    - role: ssh_keys
+      when: "'ssh-keys' in tools"
+      tags: [ssh-keys]
+
+    - role: vmware
+      when: "'vmware' in tools"
+      tags: [vmware]

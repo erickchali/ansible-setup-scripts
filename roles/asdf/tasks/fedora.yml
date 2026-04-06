@@ -1,0 +1,32 @@
+---
+- name: Check if asdf is installed
+  ansible.builtin.command: which asdf
+  register: asdf_check
+  changed_when: false
+  failed_when: false
+
+- name: Install asdf binary
+  when: asdf_check.rc != 0
+  block:
+    - name: Download latest asdf release
+      ansible.builtin.get_url:
+        url: https://github.com/asdf-vm/asdf/releases/latest/download/asdf-linux-amd64.tar.gz
+        dest: /tmp/asdf.tar.gz
+        mode: "0644"
+
+    - name: Create bin directory
+      ansible.builtin.file:
+        path: "{{ ansible_env.HOME }}/bin"
+        state: directory
+        mode: "0755"
+
+    - name: Extract asdf
+      ansible.builtin.unarchive:
+        src: /tmp/asdf.tar.gz
+        dest: "{{ ansible_env.HOME }}/bin"
+        remote_src: true
+
+    - name: Cleanup download
+      ansible.builtin.file:
+        path: /tmp/asdf.tar.gz
+        state: absent

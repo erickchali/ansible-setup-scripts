@@ -1,0 +1,22 @@
+---
+- name: Import Brave GPG key
+  become: true
+  ansible.builtin.rpm_key:
+    key: https://brave-browser-rpm-release.s3.brave.com/brave-core.asc
+    state: present
+
+- name: Add Brave repository
+  become: true
+  ansible.builtin.yum_repository:
+    name: brave-browser
+    description: Brave Browser
+    baseurl: https://brave-browser-rpm-release.s3.brave.com/$basearch
+    gpgcheck: true
+    gpgkey: https://brave-browser-rpm-release.s3.brave.com/brave-core.asc
+    enabled: true
+
+- name: Install Brave Browser
+  become: true
+  ansible.builtin.dnf:
+    name: brave-browser
+    state: present

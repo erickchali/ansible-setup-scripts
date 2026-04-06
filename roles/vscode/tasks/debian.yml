@@ -1,0 +1,30 @@
+---
+- name: Install prerequisites
+  become: true
+  ansible.builtin.apt:
+    name:
+      - curl
+      - gnupg
+      - apt-transport-https
+    state: present
+
+- name: Add Microsoft GPG key
+  become: true
+  ansible.builtin.get_url:
+    url: https://packages.microsoft.com/keys/microsoft.asc
+    dest: /usr/share/keyrings/microsoft-archive-keyring.asc
+    mode: "0644"
+
+- name: Add VS Code APT repository
+  become: true
+  ansible.builtin.apt_repository:
+    repo: "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft-archive-keyring.asc] https://packages.microsoft.com/repos/code stable main"
+    state: present
+    filename: vscode
+
+- name: Install VS Code
+  become: true
+  ansible.builtin.apt:
+    name: code
+    state: present
+    update_cache: true

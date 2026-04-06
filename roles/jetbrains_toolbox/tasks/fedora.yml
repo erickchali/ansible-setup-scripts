@@ -57,7 +57,7 @@
 - name: Create symlink for easy access
   become: true
   ansible.builtin.file:
-    src: /opt/jetbrains/jetbrains-toolbox
+    src: /opt/jetbrains/bin/jetbrains-toolbox
     dest: /usr/local/bin/jetbrains-toolbox
     state: link
 

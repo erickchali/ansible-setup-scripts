@@ -44,6 +44,10 @@
       when: "'paru' in tools and distro_family == 'arch'"
       tags: [paru]
 
+    - role: zsh
+      when: "'zsh' in tools"
+      tags: [zsh]
+
     - role: docker
       when: "'docker' in tools"
       tags: [docker]

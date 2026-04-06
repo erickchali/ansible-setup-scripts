@@ -40,10 +40,21 @@
     remote_src: true
   when: not jb_dir.stat.exists
 
-- name: Run JetBrains Toolbox installer
-  ansible.builtin.shell:
-    cmd: /tmp/jetbrains-toolbox-extract/*/jetbrains-toolbox --minimize
+- name: Find JetBrains Toolbox binary
+  ansible.builtin.find:
+    paths: /tmp/jetbrains-toolbox-extract
+    patterns: "jetbrains-toolbox"
+    recurse: true
+    file_type: file
+  register: jb_binary
   when: not jb_dir.stat.exists
+
+- name: Run JetBrains Toolbox installer
+  ansible.builtin.command:
+    cmd: "{{ jb_binary.files[0].path }} --minimize"
+  when:
+    - not jb_dir.stat.exists
+    - jb_binary.files | length > 0
   changed_when: true
 
 - name: Cleanup download

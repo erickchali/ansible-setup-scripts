@@ -13,6 +13,13 @@
   become: false
 
   pre_tasks:
+    - name: Verify sudo access
+      become: true
+      ansible.builtin.command: whoami
+      register: sudo_check
+      changed_when: false
+      tags: always
+
     - name: Detect distro family
       ansible.builtin.set_fact:
         distro_family: >-

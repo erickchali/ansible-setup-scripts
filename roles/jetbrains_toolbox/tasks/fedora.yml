@@ -4,41 +4,41 @@
 
 - name: Check if JetBrains Toolbox is already installed
   ansible.builtin.stat:
-    path: "{{ ansible_env.HOME }}/.local/share/JetBrains/Toolbox"
-  register: jb_dir
+    path: "{{ ansible_env.HOME }}/.local/share/JetBrains/Toolbox/bin/jetbrains-toolbox"
+  register: jb_bin
 
 - name: Get latest JetBrains Toolbox download URL
   ansible.builtin.uri:
     url: https://data.services.jetbrains.com/products/releases?code=TBA&latest=true&type=release
     return_content: true
   register: jb_releases
-  when: not jb_dir.stat.exists
+  when: not jb_bin.stat.exists
 
 - name: Set download URL
   ansible.builtin.set_fact:
     jb_url: "{{ (jb_releases.json.TBA[0].downloads.linux.link) }}"
-  when: not jb_dir.stat.exists
+  when: not jb_bin.stat.exists
 
 - name: Download JetBrains Toolbox
   ansible.builtin.get_url:
     url: "{{ jb_url }}"
     dest: /tmp/jetbrains-toolbox.tar.gz
     mode: "0644"
-  when: not jb_dir.stat.exists
+  when: not jb_bin.stat.exists
 
 - name: Create extraction directory
   ansible.builtin.file:
     path: /tmp/jetbrains-toolbox-extract
     state: directory
     mode: "0755"
-  when: not jb_dir.stat.exists
+  when: not jb_bin.stat.exists
 
 - name: Extract JetBrains Toolbox
   ansible.builtin.unarchive:
     src: /tmp/jetbrains-toolbox.tar.gz
     dest: /tmp/jetbrains-toolbox-extract
     remote_src: true
-  when: not jb_dir.stat.exists
+  when: not jb_bin.stat.exists
 
 - name: Find JetBrains Toolbox binary
   ansible.builtin.find:
@@ -47,13 +47,13 @@
     recurse: true
     file_type: file
   register: jb_binary
-  when: not jb_dir.stat.exists
+  when: not jb_bin.stat.exists
 
 - name: Run JetBrains Toolbox installer
   ansible.builtin.shell:
     cmd: "nohup {{ jb_binary.files[0].path }} --minimize &>/dev/null &"
   when:
-    - not jb_dir.stat.exists
+    - not jb_bin.stat.exists
     - jb_binary.files | length > 0
   changed_when: true
 
@@ -64,4 +64,4 @@
   loop:
     - /tmp/jetbrains-toolbox.tar.gz
     - /tmp/jetbrains-toolbox-extract
-  when: not jb_dir.stat.exists
+  when: not jb_bin.stat.exists

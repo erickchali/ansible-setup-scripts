@@ -1,7 +1,7 @@
 ---
 - name: Ensure asdf shims are on PATH
   ansible.builtin.set_fact:
-    asdf_path: "{{ ansible_env.HOME }}/.asdf/shims:{{ ansible_env.HOME }}/bin:{{ ansible_env.PATH }}"
+    asdf_path: "{{ ansible_env.HOME }}/.asdf/shims:/usr/local/bin:{{ ansible_env.HOME }}/bin:{{ ansible_env.PATH }}"
 
 - name: Install asdf plugins
   ansible.builtin.shell:
@@ -9,7 +9,7 @@
       export PATH="{{ asdf_path }}"
       asdf plugin add {{ item.name }} || true
       asdf install {{ item.name }} {{ item.version }}
-      asdf set --home {{ item.name }} {{ item.version }}
+      asdf set -u {{ item.name }} {{ item.version }}
   loop: "{{ asdf_plugins }}"
   register: plugin_result
   changed_when: "'installed' in plugin_result.stdout"

@@ -20,11 +20,13 @@
           {%- elif ansible_distribution == 'Fedora' -%}fedora
           {%- elif ansible_distribution in ['Ubuntu', 'Pop!_OS', 'Debian', 'Linux Mint'] -%}debian
           {%- else -%}unknown{%- endif -%}
+      tags: always
 
     - name: Fail on unsupported distro
       ansible.builtin.fail:
         msg: "Unsupported distribution: {{ ansible_distribution }}"
       when: distro_family == 'unknown'
+      tags: always
 
     - name: Show detected distro
       ansible.builtin.debug:

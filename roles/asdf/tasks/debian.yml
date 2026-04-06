@@ -5,25 +5,39 @@
   changed_when: false
   failed_when: false
 
+- name: Install asdf dependencies
+  become: true
+  ansible.builtin.apt:
+    name:
+      - curl
+      - git
+    state: present
+  when: asdf_check.rc != 0
+
 - name: Install asdf binary
   when: asdf_check.rc != 0
   block:
-    - name: Download latest asdf release
+    - name: Get latest asdf release version
+      ansible.builtin.uri:
+        url: https://api.github.com/repos/asdf-vm/asdf/releases/latest
+        return_content: true
+      register: asdf_release
+
+    - name: Set asdf version
+      ansible.builtin.set_fact:
+        asdf_version: "{{ asdf_release.json.tag_name }}"
+
+    - name: Download asdf binary
       ansible.builtin.get_url:
-        url: https://github.com/asdf-vm/asdf/releases/latest/download/asdf-linux-amd64.tar.gz
+        url: "https://github.com/asdf-vm/asdf/releases/download/{{ asdf_version }}/asdf-{{ asdf_version }}-linux-amd64.tar.gz"
         dest: /tmp/asdf.tar.gz
         mode: "0644"
 
-    - name: Create bin directory
-      ansible.builtin.file:
-        path: "{{ ansible_env.HOME }}/bin"
-        state: directory
-        mode: "0755"
-
-    - name: Extract asdf
+    - name: Extract asdf to /usr/local/bin
+      become: true
       ansible.builtin.unarchive:
         src: /tmp/asdf.tar.gz
-        dest: "{{ ansible_env.HOME }}/bin"
+        dest: /usr/local/bin
         remote_src: true
 
     - name: Cleanup download

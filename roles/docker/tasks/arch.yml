@@ -36,10 +36,3 @@
       }
     mode: "0644"
   notify: Restart Docker
-
-handlers:
-  - name: Restart Docker
-    become: true
-    ansible.builtin.systemd:
-      name: docker
-      state: restarted

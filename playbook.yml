@@ -91,3 +91,7 @@
     - role: vmware
       when: "'vmware' in tools"
       tags: [vmware]
+
+    - role: nerd_fonts
+      when: "'nerd-fonts' in tools"
+      tags: [nerd-fonts]

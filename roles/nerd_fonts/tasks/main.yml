@@ -1,0 +1,28 @@
+---
+- name: Create fonts directory
+  ansible.builtin.file:
+    path: "{{ ansible_env.HOME }}/.local/share/fonts"
+    state: directory
+    mode: "0755"
+
+- name: Download and install Nerd Fonts
+  ansible.builtin.shell:
+    cmd: |
+      font_dir="{{ ansible_env.HOME }}/.local/share/fonts"
+      if ls "$font_dir"/*"{{ item }}"* &>/dev/null 2>&1; then
+        echo "ALREADY_INSTALLED"
+        exit 0
+      fi
+      curl -fsSL "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/{{ item }}.tar.xz" -o "/tmp/{{ item }}.tar.xz"
+      mkdir -p "/tmp/{{ item }}-nf"
+      tar -xf "/tmp/{{ item }}.tar.xz" -C "/tmp/{{ item }}-nf"
+      cp /tmp/{{ item }}-nf/*.ttf "$font_dir/" 2>/dev/null || cp /tmp/{{ item }}-nf/*.otf "$font_dir/" 2>/dev/null
+      rm -rf "/tmp/{{ item }}.tar.xz" "/tmp/{{ item }}-nf"
+      echo "INSTALLED"
+  loop: "{{ nerd_fonts }}"
+  register: font_result
+  changed_when: "'INSTALLED' in font_result.stdout and 'ALREADY' not in font_result.stdout"
+
+- name: Rebuild font cache
+  ansible.builtin.command: fc-cache -fv
+  changed_when: true

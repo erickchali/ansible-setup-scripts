@@ -18,6 +18,15 @@ tools:
   - flameshot
   - ssh-keys
   - vmware
+  - nerd-fonts
+
+# ─── Nerd Fonts to install ───────────────────────────────────────────────────
+
+nerd_fonts:
+  - JetBrainsMono
+  - Hack
+  - FiraCode
+  - Meslo
 
 # ─── SSH key profiles ────────────────────────────────────────────────────────
 

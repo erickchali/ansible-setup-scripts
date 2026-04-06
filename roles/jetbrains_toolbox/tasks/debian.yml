@@ -1,11 +1,15 @@
 ---
-# JetBrains Toolbox doesn't have official repos for Fedora/Ubuntu.
-# Download the tarball and extract it.
-
 - name: Check if JetBrains Toolbox is already installed
   ansible.builtin.stat:
-    path: "{{ ansible_env.HOME }}/.local/share/JetBrains/Toolbox/bin/jetbrains-toolbox"
+    path: /opt/jetbrains/jetbrains-toolbox
   register: jb_bin
+
+- name: Install libfuse2 (required by JetBrains Toolbox)
+  become: true
+  ansible.builtin.apt:
+    name: libfuse2
+    state: present
+  when: not jb_bin.stat.exists
 
 - name: Get latest JetBrains Toolbox download URL
   ansible.builtin.uri:
@@ -26,42 +30,44 @@
     mode: "0644"
   when: not jb_bin.stat.exists
 
-- name: Create extraction directory
-  ansible.builtin.file:
-    path: /tmp/jetbrains-toolbox-extract
-    state: directory
-    mode: "0755"
-  when: not jb_bin.stat.exists
-
-- name: Extract JetBrains Toolbox
+- name: Extract JetBrains Toolbox to /tmp
   ansible.builtin.unarchive:
     src: /tmp/jetbrains-toolbox.tar.gz
-    dest: /tmp/jetbrains-toolbox-extract
+    dest: /tmp/
     remote_src: true
   when: not jb_bin.stat.exists
 
-- name: Find JetBrains Toolbox binary
+- name: Find extracted directory name
   ansible.builtin.find:
-    paths: /tmp/jetbrains-toolbox-extract
-    patterns: "jetbrains-toolbox"
-    recurse: true
-    file_type: file
-  register: jb_binary
+    paths: /tmp
+    patterns: "jetbrains-toolbox-*"
+    file_type: directory
+  register: jb_extracted
   when: not jb_bin.stat.exists
 
-- name: Run JetBrains Toolbox installer
-  ansible.builtin.shell:
-    cmd: "nohup {{ jb_binary.files[0].path }} --minimize &>/dev/null &"
+- name: Move to /opt/jetbrains
+  become: true
+  ansible.builtin.command:
+    cmd: "mv {{ jb_extracted.files[0].path }} /opt/jetbrains"
+    creates: /opt/jetbrains
   when:
     - not jb_bin.stat.exists
-    - jb_binary.files | length > 0
+    - jb_extracted.files | default([]) | length > 0
+
+- name: Create symlink for easy access
+  become: true
+  ansible.builtin.file:
+    src: /opt/jetbrains/jetbrains-toolbox
+    dest: /usr/local/bin/jetbrains-toolbox
+    state: link
+
+- name: Launch JetBrains Toolbox to register desktop entry
+  ansible.builtin.shell:
+    cmd: "nohup /opt/jetbrains/jetbrains-toolbox --minimize &>/dev/null &"
+  when: not jb_bin.stat.exists
   changed_when: true
 
 - name: Cleanup download
   ansible.builtin.file:
-    path: "{{ item }}"
+    path: /tmp/jetbrains-toolbox.tar.gz
     state: absent
-  loop:
-    - /tmp/jetbrains-toolbox.tar.gz
-    - /tmp/jetbrains-toolbox-extract
-  when: not jb_bin.stat.exists

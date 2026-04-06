@@ -33,6 +33,13 @@
     enabled: true
     state: started
 
+- name: Enable and start containerd service
+  become: true
+  ansible.builtin.systemd:
+    name: containerd
+    enabled: true
+    state: started
+
 - name: Add user to docker group
   become: true
   ansible.builtin.user:

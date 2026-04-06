@@ -50,8 +50,8 @@
   when: not jb_dir.stat.exists
 
 - name: Run JetBrains Toolbox installer
-  ansible.builtin.command:
-    cmd: "{{ jb_binary.files[0].path }} --minimize"
+  ansible.builtin.shell:
+    cmd: "nohup {{ jb_binary.files[0].path }} --minimize &>/dev/null &"
   when:
     - not jb_dir.stat.exists
     - jb_binary.files | length > 0
